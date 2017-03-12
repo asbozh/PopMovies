@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Pop Movies</string>
+    <string name="retry_desc">Try to reconnect</string>
+    <string name="movie_item">Movie item</string>
+    <string name="menu_popular">Sort by popular</string>
+    <string name="menu_top_rated">Sort by top rated</string>
+    <string name="error_message">No Internet connection.\nPlease connect and retry.</string>
+    <string name="movie_poster">Movie Poster</string>
+    <string name="release_date">Release Date</string>
+    <string name="rating">Rating</string>
+    <string name="movie_details">MovieDetail</string>
+
+</resources>
