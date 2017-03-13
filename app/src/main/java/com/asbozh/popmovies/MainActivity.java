@@ -157,6 +157,10 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             loadMovieData(SORT_BY_TOP_RATED);
             return true;
         }
+        if (id == R.id.menu_favourites) {
+            //TODO favourite movies
+            return true;
+        }
 
         return super.onOptionsItemSelected(item);
     }

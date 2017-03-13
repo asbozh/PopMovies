@@ -9,5 +9,9 @@
     <string name="release_date">Release Date</string>
     <string name="rating">Rating</string>
     <string name="movie_details">MovieDetail</string>
+    <string name="trailers_header">Trailers:</string>
+    <string name="reviews_header">Reviews:</string>
+    <string name="favourite_display">Mark as favourite</string>
+    <string name="menu_favourite">Favourite movies</string>
 
 </resources>

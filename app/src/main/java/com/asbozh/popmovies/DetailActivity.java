@@ -3,6 +3,8 @@ package com.asbozh.popmovies;
 import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.RecyclerView;
+import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -19,6 +21,9 @@ public class DetailActivity extends AppCompatActivity {
     @BindView(R.id.tv_movie_release_date) TextView mDetailReleaseDateTextView;
     @BindView(R.id.tv_user_rating) TextView mDetailRatingTextView;
     @BindView(R.id.tv_movie_overview) TextView mDetailOverview;
+    @BindView(R.id.cb_favourite_star) CheckBox mCheckBoxFavourite;
+    @BindView(R.id.rv_trailers_list) RecyclerView mTrailersList;
+    @BindView(R.id.rv_reviews_list) RecyclerView mReviewsList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
