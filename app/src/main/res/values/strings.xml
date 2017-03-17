@@ -13,5 +13,6 @@
     <string name="reviews_header">Reviews:</string>
     <string name="favourite_display">Mark as favourite</string>
     <string name="menu_favourite">Favourite movies</string>
+    <string name="review_list_from">From:</string>
 
 </resources>

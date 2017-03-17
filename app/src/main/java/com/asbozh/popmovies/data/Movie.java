@@ -11,13 +11,15 @@ public class Movie implements Parcelable {
     private String movieOverview;
     private double movieRating;
     private String movieReleaseDate;
+    private int movieId;
 
-    public Movie(String movieTitle, String moviePoster, String movieOverview, double movieRating, String movieReleaseDate) {
+    public Movie(String movieTitle, String moviePoster, String movieOverview, double movieRating, String movieReleaseDate, int movieId) {
         this.movieTitle = movieTitle;
         this.moviePoster = moviePoster;
         this.movieOverview = movieOverview;
         this.movieRating = movieRating;
         this.movieReleaseDate = movieReleaseDate;
+        this.movieId = movieId;
     }
 
     public String getMovieOverview() {
@@ -59,6 +61,13 @@ public class Movie implements Parcelable {
     public void setMovieReleaseDate(String movieReleaseDate) {
         this.movieReleaseDate = movieReleaseDate;
     }
+    public int getMovieId() {
+        return movieId;
+    }
+
+    public void setMovieId(int movieId) {
+        this.movieId = movieId;
+    }
 
 
     protected Movie(Parcel in) {
@@ -67,6 +76,7 @@ public class Movie implements Parcelable {
         movieOverview = in.readString();
         movieRating = in.readDouble();
         movieReleaseDate = in.readString();
+        movieId = in.readInt();
     }
 
     @Override
@@ -81,6 +91,7 @@ public class Movie implements Parcelable {
         dest.writeString(movieOverview);
         dest.writeDouble(movieRating);
         dest.writeString(movieReleaseDate);
+        dest.writeInt(movieId);
     }
 
     @SuppressWarnings("unused")
@@ -95,4 +106,6 @@ public class Movie implements Parcelable {
             return new Movie[size];
         }
     };
+
+
 }

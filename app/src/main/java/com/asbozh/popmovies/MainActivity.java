@@ -54,7 +54,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         // set recycler view
         mRecyclerViewMovieList = (RecyclerView) findViewById(R.id.rv_movie_list);
-        GridLayoutManager gridLayoutManager = new GridLayoutManager(MainActivity.this, 2);
+        GridLayoutManager gridLayoutManager;
+        boolean tabletSize = getResources().getBoolean(R.bool.isTablet);
+        if (tabletSize) {
+            gridLayoutManager = new GridLayoutManager(MainActivity.this, 3);
+        } else {
+            gridLayoutManager = new GridLayoutManager(MainActivity.this, 2);
+        }
         mRecyclerViewMovieList.setLayoutManager(gridLayoutManager);
         mMovieAdapter = new MovieAdapter(this, this);
         mRecyclerViewMovieList.setAdapter(mMovieAdapter);
