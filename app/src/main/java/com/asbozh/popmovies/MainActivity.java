@@ -4,11 +4,14 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.os.AsyncTask;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -24,10 +27,13 @@ import com.asbozh.popmovies.utilities.NetworkUtils;
 import java.net.URL;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler {
+public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler, LoaderManager.LoaderCallbacks<List<Movie>> {
 
     private static final String SORT_BY_POPULAR = "popular";
     private static final String SORT_BY_TOP_RATED = "top_rated";
+
+    private static final int MOVIE_LOADER_ID = 111;
+    private static final String MOVIE_SORT_TAG = "sort_by";
 
     private RecyclerView mRecyclerViewMovieList;
     private MovieAdapter mMovieAdapter;
@@ -48,7 +54,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mRetryImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                loadMovieData(SORT_BY_POPULAR);
+                loadMovieData(SORT_BY_POPULAR, true);
             }
         });
 
@@ -65,17 +71,22 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mMovieAdapter = new MovieAdapter(this, this);
         mRecyclerViewMovieList.setAdapter(mMovieAdapter);
 
-        loadMovieData(SORT_BY_POPULAR);
+        loadMovieData(SORT_BY_POPULAR, false);
     }
 
-    private void loadMovieData(String sortBy) {
+    private void loadMovieData(String sortBy, boolean restartLoader) {
         showMovieDataView();
         if (isOnline()) {
-            new FetchMovieDataTask().execute(sortBy);
+            Bundle loaderBundle = new Bundle();
+            loaderBundle.putString(MOVIE_SORT_TAG, sortBy);
+            if (restartLoader) {
+                getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, loaderBundle, this);
+            } else {
+                getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, loaderBundle, this);
+            }
         } else {
             showErrorMessage();
         }
-
     }
 
     private boolean isOnline() {
@@ -103,44 +114,65 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         startActivity(intentToStartDetailActivity);
     }
 
-    public class FetchMovieDataTask extends AsyncTask<String, Void, List<Movie>> {
+    @Override
+    public Loader<List<Movie>> onCreateLoader(int id, final Bundle args) {
+        return new AsyncTaskLoader<List<Movie>>(this) {
 
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            mProgressBar.setVisibility(View.VISIBLE);
-        }
+            List<Movie> mMovieData = null;
 
-        @Override
-        protected List<Movie> doInBackground(String... strings) {
-            if (strings.length == 0) {
-                return null;
+            @Override
+            protected void onStartLoading() {
+                super.onStartLoading();
+                if (mMovieData != null) {
+                    deliverResult(mMovieData);
+                } else if (args != null){
+                    mProgressBar.setVisibility(View.VISIBLE);
+                    forceLoad();
+                }
             }
-            String sortBy = strings[0];
-            URL moviesRequestUrl = NetworkUtils.buildUrl(sortBy);
 
-            try {
-                String jsonMoviesResponse = NetworkUtils
-                        .getResponseFromHttpUrl(moviesRequestUrl);
+            @Override
+            public List<Movie> loadInBackground() {
+                String sortBy = args.getString(MOVIE_SORT_TAG);
 
-                return MoviesJsonUtils.getMoviesListStringsFromJson(jsonMoviesResponse);
+                if (sortBy == null || TextUtils.isEmpty(sortBy)) {
+                    return null;
+                }
+                URL moviesRequestUrl = NetworkUtils.buildUrl(sortBy);
+                try {
+                    String jsonMoviesResponse = NetworkUtils
+                            .getResponseFromHttpUrl(moviesRequestUrl);
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
+                    return MoviesJsonUtils.getMoviesListStringsFromJson(jsonMoviesResponse);
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    return null;
+                }
             }
-        }
 
-        @Override
-        protected void onPostExecute(List<Movie> movies) {
-            super.onPostExecute(movies);
-            mProgressBar.setVisibility(View.INVISIBLE);
-            if (movies != null) {
-                showMovieDataView();
-                mMovieAdapter.setMovieData(movies);
+            @Override
+            public void deliverResult(List<Movie> data) {
+                mMovieData = data;
+                super.deliverResult(data);
             }
+        };
+    }
+
+    @Override
+    public void onLoadFinished(Loader<List<Movie>> loader, List<Movie> movies) {
+        mProgressBar.setVisibility(View.INVISIBLE);
+        if (movies != null) {
+            showMovieDataView();
+            mMovieAdapter.setMovieData(movies);
         }
     }
+
+    @Override
+    public void onLoaderReset(Loader<List<Movie>> loader) {
+        loader = null;
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -155,12 +187,12 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         if (id == R.id.menu_sort_popular) {
             mMovieAdapter.setMovieData(null);
-            loadMovieData(SORT_BY_POPULAR);
+            loadMovieData(SORT_BY_POPULAR, true);
             return true;
         }
         if (id == R.id.menu_sort_top_rated) {
             mMovieAdapter.setMovieData(null);
-            loadMovieData(SORT_BY_TOP_RATED);
+            loadMovieData(SORT_BY_TOP_RATED, true);
             return true;
         }
         if (id == R.id.menu_favourites) {
