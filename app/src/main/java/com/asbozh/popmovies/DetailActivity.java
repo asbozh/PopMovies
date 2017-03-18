@@ -1,13 +1,16 @@
 package com.asbozh.popmovies;
 
+import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.AsyncTask;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.AsyncTaskLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -36,6 +39,9 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
     @BindView(R.id.rv_trailers_list) RecyclerView mTrailersList;
     @BindView(R.id.rv_reviews_list) RecyclerView mReviewsList;
 
+    private static final int TRAILER_LOADER_ID = 222;
+    private static final int REVIEW_LOADER_ID = 333;
+
     private int movieId;
     private TrailerAdapter mTrailerAdapter;
     private ReviewAdapter mReviewAdapter;
@@ -63,8 +69,8 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
             RecyclerView.LayoutManager mReviewsLayoutManager = new LinearLayoutManager(getApplicationContext());
             mReviewsList.setLayoutManager(mReviewsLayoutManager);
             mReviewsList.setAdapter(mReviewAdapter);
-            new FetchTrailerDataTask().execute(movieId);
-            new FetchReviewDataTask().execute(movieId);
+            getSupportLoaderManager().initLoader(TRAILER_LOADER_ID, null, new TrailerCallback(this));
+            getSupportLoaderManager().initLoader(REVIEW_LOADER_ID, null, new ReviewCallback(this));
         }
     }
 
@@ -73,67 +79,125 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
         startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse("http://www.youtube.com/watch?v=" + selectedTrailer.getTrailerKey())));
     }
 
-    public class FetchTrailerDataTask extends AsyncTask<Integer, Void, List<Trailer>> {
+    private class TrailerCallback implements LoaderManager.LoaderCallbacks<List<Trailer>> {
 
-        @Override
-        protected List<Trailer> doInBackground(Integer... params) {
-            if (params.length == 0) {
-                return null;
-            }
-            int movieId = params[0];
+        private Context context;
 
-            URL trailersRequestUrl = NetworkUtils.buildTrailersUrl(movieId);
-
-            try {
-                String jsonTrailersResponse = NetworkUtils
-                        .getResponseFromHttpUrl(trailersRequestUrl);
-
-                return MoviesJsonUtils.getTrailersListStringsFromJson(jsonTrailersResponse);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
-            }
+        private TrailerCallback(Context context) {
+            this.context = context;
         }
 
         @Override
-        protected void onPostExecute(List<Trailer> trailers) {
-            super.onPostExecute(trailers);
+        public Loader<List<Trailer>> onCreateLoader(int id, Bundle args) {
+            return new AsyncTaskLoader<List<Trailer>>(context) {
+
+                List<Trailer> mTrailerData = null;
+
+                @Override
+                protected void onStartLoading() {
+                    super.onStartLoading();
+                    if (mTrailerData != null) {
+                        deliverResult(mTrailerData);
+                    } else {
+                        forceLoad();
+                    }
+                }
+
+                @Override
+                public List<Trailer> loadInBackground() {
+                    URL trailersRequestUrl = NetworkUtils.buildTrailersUrl(movieId);
+
+                    try {
+                        String jsonTrailersResponse = NetworkUtils
+                                .getResponseFromHttpUrl(trailersRequestUrl);
+
+                        return MoviesJsonUtils.getTrailersListStringsFromJson(jsonTrailersResponse);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+
+                @Override
+                public void deliverResult(List<Trailer> data) {
+                    mTrailerData = data;
+                    super.deliverResult(data);
+                }
+            };
+        }
+
+        @Override
+        public void onLoadFinished(Loader<List<Trailer>> loader, List<Trailer> trailers) {
             if (trailers != null) {
                 mTrailerAdapter.setTrailerData(trailers);
             }
         }
-    }
-
-    public class  FetchReviewDataTask extends AsyncTask<Integer, Void, List<Review>> {
 
         @Override
-        protected List<Review> doInBackground(Integer... params) {
-            if (params.length == 0) {
-                return null;
-            }
-            int movieId = params[0];
+        public void onLoaderReset(Loader<List<Trailer>> loader) {
+            loader = null;
+        }
+    }
 
-            URL reviewsRequestUrl = NetworkUtils.buildReviewsUrl(movieId);
+    private class ReviewCallback implements LoaderManager.LoaderCallbacks<List<Review>> {
 
-            try {
-                String jsonReviewsResponse = NetworkUtils
-                        .getResponseFromHttpUrl(reviewsRequestUrl);
+        private Context context;
 
-                return MoviesJsonUtils.getReviewsListStringsFromJson(jsonReviewsResponse);
+        private ReviewCallback(Context context) {
+            this.context = context;
+        }
 
-            } catch (Exception e) {
-                e.printStackTrace();
-                return null;
+        @Override
+        public Loader<List<Review>> onCreateLoader(int id, Bundle args) {
+            return new AsyncTaskLoader<List<Review>>(context) {
+
+                List<Review> mReviewData = null;
+
+                @Override
+                protected void onStartLoading() {
+                    super.onStartLoading();
+                    if (mReviewData != null) {
+                        deliverResult(mReviewData);
+                    } else {
+                        forceLoad();
+                    }
+                }
+
+                @Override
+                public List<Review> loadInBackground() {
+                    URL reviewsRequestUrl = NetworkUtils.buildReviewsUrl(movieId);
+
+                    try {
+                        String jsonReviewsResponse = NetworkUtils
+                                .getResponseFromHttpUrl(reviewsRequestUrl);
+
+                        return MoviesJsonUtils.getReviewsListStringsFromJson(jsonReviewsResponse);
+
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        return null;
+                    }
+                }
+
+                @Override
+                public void deliverResult(List<Review> data) {
+                    mReviewData = data;
+                    super.deliverResult(data);
+                }
+            };
+        }
+
+        @Override
+        public void onLoadFinished(Loader<List<Review>> loader, List<Review> reviews) {
+            if (reviews != null) {
+                mReviewAdapter.setReviewData(reviews);
             }
         }
 
         @Override
-        protected void onPostExecute(List<Review> reviews) {
-            super.onPostExecute(reviews);
-            if (reviews != null) {
-                mReviewAdapter.setReviewData(reviews);
-            }
+        public void onLoaderReset(Loader<List<Review>> loader) {
+            loader = null;
         }
     }
 }
