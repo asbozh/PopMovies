@@ -1,5 +1,6 @@
 package com.asbozh.popmovies;
 
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -11,13 +12,16 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.widget.CheckBox;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.asbozh.popmovies.data.Movie;
 import com.asbozh.popmovies.data.Review;
 import com.asbozh.popmovies.data.Trailer;
+import com.asbozh.popmovies.database.FavouriteMoviesContract;
 import com.asbozh.popmovies.utilities.MoviesJsonUtils;
 import com.asbozh.popmovies.utilities.NetworkUtils;
 import com.squareup.picasso.Picasso;
@@ -45,6 +49,7 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
     private int movieId;
     private TrailerAdapter mTrailerAdapter;
     private ReviewAdapter mReviewAdapter;
+    private Movie movie;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -54,7 +59,7 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
         ButterKnife.bind(this);
         Intent receivedIntent = getIntent();
         if (receivedIntent != null && receivedIntent.hasExtra("movie")) {
-            Movie movie = receivedIntent.getParcelableExtra("movie");
+            movie = receivedIntent.getParcelableExtra("movie");
             mDetailTitleTextView.setText(movie.getMovieTitle());
             mDetailReleaseDateTextView.setText(movie.getMovieReleaseDate());
             mDetailRatingTextView.setText(String.valueOf(movie.getMovieRating()));
@@ -72,6 +77,37 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
             getSupportLoaderManager().initLoader(TRAILER_LOADER_ID, null, new TrailerCallback(this));
             getSupportLoaderManager().initLoader(REVIEW_LOADER_ID, null, new ReviewCallback(this));
         }
+        mCheckBoxFavourite.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mCheckBoxFavourite.isChecked()) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_MOVIE_ID, movieId);
+                    contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_TITLE, movie.getMovieTitle());
+                    contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_POSTER, movie.getMoviePoster());
+                    contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_OVERVIEW, movie.getMovieOverview());
+                    contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_RATING, movie.getMovieRating());
+                    contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_RELEASE_DATE, movie.getMovieReleaseDate());
+
+                    Uri uri = getContentResolver().insert(FavouriteMoviesContract.FavouriteMoviesEntry.CONTENT_URI, contentValues);
+
+                    if(uri != null) {
+                        Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_LONG).show();
+                    }
+                } else {
+
+
+                    String stringId = Integer.toString(movieId);
+                    Uri uri = FavouriteMoviesContract.FavouriteMoviesEntry.CONTENT_URI;
+                    uri = uri.buildUpon().appendPath(stringId).build();
+
+                    getContentResolver().delete(uri, null, null);
+                    if(uri != null) {
+                        Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_LONG).show();
+                    }
+                }
+            }
+        });
     }
 
     @Override
