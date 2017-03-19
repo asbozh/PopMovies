@@ -2,6 +2,7 @@ package com.asbozh.popmovies;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
@@ -13,6 +14,7 @@ import android.os.Bundle;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -35,6 +37,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
     private static final String SORT_BY_POPULAR = "popular";
     private static final String SORT_BY_TOP_RATED = "top_rated";
+    private static final String SHOW_FAV = "favourite";
+    private static final String CRITERION_KEY = "criterion_key";
 
     private static final int FAV_MOVIE_LOADER_ID = 121;
     private static final int MOVIE_LOADER_ID = 111;
@@ -47,12 +51,15 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private ProgressBar mProgressBar;
     private ImageButton mRetryImageButton;
 
-    private boolean isFavourite = false;
+    private String criteria;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        criteria = sharedPref.getString(CRITERION_KEY, SORT_BY_POPULAR);
 
         // find views
         mErrorMessageTextView = (TextView) findViewById(R.id.tv_error_message);
@@ -61,7 +68,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mRetryImageButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                loadMovieData(SORT_BY_POPULAR, true);
+                loadMovieData(criteria);
             }
         });
 
@@ -70,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         GridLayoutManager gridLayoutManager;
         boolean tabletSize = getResources().getBoolean(R.bool.isTablet);
         if (tabletSize) {
-            gridLayoutManager = new GridLayoutManager(MainActivity.this, 3);
+            gridLayoutManager = new GridLayoutManager(MainActivity.this, calculateNoOfColumns(this));
         } else {
             gridLayoutManager = new GridLayoutManager(MainActivity.this, 2);
         }
@@ -78,28 +85,28 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mMovieAdapter = new MovieAdapter(this, this);
         mRecyclerViewMovieList.setAdapter(mMovieAdapter);
 
-        if (savedInstanceState != null) {
-            isFavourite = savedInstanceState.getBoolean("favourite_key");
-        }
 
-        if (!isFavourite) {
-            getSupportLoaderManager().initLoader(FAV_MOVIE_LOADER_ID, null, new FavouriteMoviesCallback(this));
-            loadMovieData(SORT_BY_POPULAR, false);
-        } else {
+        if (criteria.equals(SHOW_FAV)) {
             getSupportLoaderManager().restartLoader(FAV_MOVIE_LOADER_ID, null, new FavouriteMoviesCallback(this));
+        } else {
+            loadMovieData(criteria);
         }
     }
 
-    private void loadMovieData(String sortBy, boolean restartLoader) {
+    public static int calculateNoOfColumns(Context context) {
+        DisplayMetrics displayMetrics = context.getResources().getDisplayMetrics();
+        float dpWidth = displayMetrics.widthPixels / displayMetrics.density;
+        int scalingFactor = 180;
+        int noOfColumns = (int) (dpWidth / scalingFactor);
+        return noOfColumns;
+    }
+
+    private void loadMovieData(String sortBy) {
         showMovieDataView();
         if (isOnline()) {
             Bundle loaderBundle = new Bundle();
             loaderBundle.putString(MOVIE_SORT_TAG, sortBy);
-            if (restartLoader) {
-                getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, loaderBundle, this);
-            } else {
-                getSupportLoaderManager().initLoader(MOVIE_LOADER_ID, loaderBundle, this);
-            }
+            getSupportLoaderManager().restartLoader(MOVIE_LOADER_ID, loaderBundle, this);
         } else {
             showErrorMessage();
         }
@@ -287,21 +294,21 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         int id = item.getItemId();
 
         if (id == R.id.menu_sort_popular) {
-            isFavourite = false;
             mMovieAdapter.setMovieData(null);
-            loadMovieData(SORT_BY_POPULAR, true);
+            saveCriterionKey(SORT_BY_POPULAR);
+            loadMovieData(SORT_BY_POPULAR);
             return true;
         }
         if (id == R.id.menu_sort_top_rated) {
-            isFavourite = false;
+            saveCriterionKey(SORT_BY_TOP_RATED);
             mMovieAdapter.setMovieData(null);
-            loadMovieData(SORT_BY_TOP_RATED, true);
+            loadMovieData(SORT_BY_TOP_RATED);
             return true;
         }
         if (id == R.id.menu_favourites) {
             mMovieAdapter.setMovieData(null);
             showMovieDataView();
-            isFavourite = true;
+            saveCriterionKey(SHOW_FAV);
             getSupportLoaderManager().restartLoader(FAV_MOVIE_LOADER_ID, null, new FavouriteMoviesCallback(this));
             return true;
         }
@@ -309,9 +316,11 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean("favourite_key", isFavourite);
-        super.onSaveInstanceState(outState);
+    private void saveCriterionKey(String criteria) {
+        SharedPreferences sharedPref = getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(CRITERION_KEY, criteria);
+        editor.apply();
     }
+
 }

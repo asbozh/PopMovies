@@ -16,8 +16,8 @@
 
         <ImageView
             android:id="@+id/iv_poster_details"
-            android:layout_width="150dp"
-            android:layout_height="220dp"
+            android:layout_width="@dimen/poster_width"
+            android:layout_height="@dimen/poster_height"
             android:layout_marginEnd="@dimen/activity_horizontal_margin"
             android:contentDescription="@string/movie_poster" />
 
@@ -98,7 +98,7 @@
         <TextView
             android:id="@+id/tv_delimiter_trailers"
             android:layout_below="@+id/tv_movie_overview"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@color/colorAccent"/>
@@ -106,7 +106,7 @@
         <TextView
             android:id="@+id/tv_trailers_header"
             android:layout_below="@+id/tv_delimiter_trailers"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/trailers_header"
@@ -115,7 +115,7 @@
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_trailers_list"
             android:layout_below="@+id/tv_trailers_header"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -123,7 +123,7 @@
         <TextView
             android:id="@+id/tv_delimiter_reviews"
             android:layout_below="@+id/rv_trailers_list"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
             android:layout_width="match_parent"
             android:layout_height="1dp"
             android:background="@color/colorAccent"/>
@@ -131,7 +131,7 @@
         <TextView
             android:id="@+id/tv_reviews_header"
             android:layout_below="@+id/tv_delimiter_reviews"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/reviews_header"
@@ -140,7 +140,7 @@
         <android.support.v7.widget.RecyclerView
             android:id="@+id/rv_reviews_list"
             android:layout_below="@+id/tv_reviews_header"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="@dimen/activity_vertical_margin_small"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />

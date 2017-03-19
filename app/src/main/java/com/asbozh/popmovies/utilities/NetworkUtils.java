@@ -22,8 +22,6 @@ public final class NetworkUtils {
     
     private static final String API_KEY = "77f04ead68e7a0cfa2104d1d196a5010";
 
-    //https://api.themoviedb.org/3/movie/263115/videos?api_key=77f04ead68e7a0cfa2104d1d196a5010
-
     public static URL buildUrl(String sortByQuery) {
         String startURL = MOVIES_BASE_URL + "/" + sortByQuery;
         Uri builtUri = Uri.parse(startURL).buildUpon()
