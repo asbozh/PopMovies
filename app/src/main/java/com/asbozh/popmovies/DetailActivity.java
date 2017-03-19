@@ -3,6 +3,7 @@ package com.asbozh.popmovies;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.AsyncTask;
 import android.support.v4.app.LoaderManager;
@@ -77,10 +78,22 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
             getSupportLoaderManager().initLoader(TRAILER_LOADER_ID, null, new TrailerCallback(this));
             getSupportLoaderManager().initLoader(REVIEW_LOADER_ID, null, new ReviewCallback(this));
         }
+        // Set the Checkbox depending of the movie status (is it presented in the db)
+        String stringId = Integer.toString(movieId);
+        Uri uri = FavouriteMoviesContract.FavouriteMoviesEntry.CONTENT_URI;
+        uri = uri.buildUpon().appendPath(stringId).build();
+        Cursor checkCursor = getContentResolver().query(uri, null, null, null, null);
+        if (checkCursor != null && checkCursor.getCount() > 0) {
+            mCheckBoxFavourite.setChecked(true);
+        } else {
+            mCheckBoxFavourite.setChecked(false);
+        }
         mCheckBoxFavourite.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mCheckBoxFavourite.isChecked()) {
+
+                    // Add to Favourite Movies
                     ContentValues contentValues = new ContentValues();
                     contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_MOVIE_ID, movieId);
                     contentValues.put(FavouriteMoviesContract.FavouriteMoviesEntry.COLUMN_TITLE, movie.getMovieTitle());
@@ -91,20 +104,17 @@ public class DetailActivity extends AppCompatActivity implements TrailerAdapter.
 
                     Uri uri = getContentResolver().insert(FavouriteMoviesContract.FavouriteMoviesEntry.CONTENT_URI, contentValues);
 
-                    if(uri != null) {
-                        Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_LONG).show();
-                    }
-                } else {
+                    Toast.makeText(getBaseContext(), movie.getMovieTitle() + " has been added to Favourite Movies", Toast.LENGTH_LONG).show();
 
+                } else {
+                    // Remove from Favourite Movies
 
                     String stringId = Integer.toString(movieId);
                     Uri uri = FavouriteMoviesContract.FavouriteMoviesEntry.CONTENT_URI;
                     uri = uri.buildUpon().appendPath(stringId).build();
 
                     getContentResolver().delete(uri, null, null);
-                    if(uri != null) {
-                        Toast.makeText(getBaseContext(), uri.toString(), Toast.LENGTH_LONG).show();
-                    }
+                    Toast.makeText(getBaseContext(), movie.getMovieTitle() + " has been removed from Favourite Movies", Toast.LENGTH_LONG).show();
                 }
             }
         });

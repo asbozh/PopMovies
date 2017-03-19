@@ -47,6 +47,8 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
     private ProgressBar mProgressBar;
     private ImageButton mRetryImageButton;
 
+    private boolean isFavourite = false;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -76,7 +78,16 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         mMovieAdapter = new MovieAdapter(this, this);
         mRecyclerViewMovieList.setAdapter(mMovieAdapter);
 
-        loadMovieData(SORT_BY_POPULAR, false);
+        if (savedInstanceState != null) {
+            isFavourite = savedInstanceState.getBoolean("favourite_key");
+        }
+
+        if (!isFavourite) {
+            getSupportLoaderManager().initLoader(FAV_MOVIE_LOADER_ID, null, new FavouriteMoviesCallback(this));
+            loadMovieData(SORT_BY_POPULAR, false);
+        } else {
+            getSupportLoaderManager().restartLoader(FAV_MOVIE_LOADER_ID, null, new FavouriteMoviesCallback(this));
+        }
     }
 
     private void loadMovieData(String sortBy, boolean restartLoader) {
@@ -276,11 +287,13 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         int id = item.getItemId();
 
         if (id == R.id.menu_sort_popular) {
+            isFavourite = false;
             mMovieAdapter.setMovieData(null);
             loadMovieData(SORT_BY_POPULAR, true);
             return true;
         }
         if (id == R.id.menu_sort_top_rated) {
+            isFavourite = false;
             mMovieAdapter.setMovieData(null);
             loadMovieData(SORT_BY_TOP_RATED, true);
             return true;
@@ -288,10 +301,17 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         if (id == R.id.menu_favourites) {
             mMovieAdapter.setMovieData(null);
             showMovieDataView();
-            getSupportLoaderManager().initLoader(FAV_MOVIE_LOADER_ID, null, new FavouriteMoviesCallback(this));
+            isFavourite = true;
+            getSupportLoaderManager().restartLoader(FAV_MOVIE_LOADER_ID, null, new FavouriteMoviesCallback(this));
             return true;
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putBoolean("favourite_key", isFavourite);
+        super.onSaveInstanceState(outState);
     }
 }
